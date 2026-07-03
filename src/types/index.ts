@@ -16,6 +16,7 @@ export type CostCategory =
 export type ClosureStatus = 'Reserved' | 'SPA Signed' | 'Paid';
 export type Currency = 'AED' | 'USD' | 'ZAR' | 'SGD' | 'AUD' | 'MUR' | 'EUR' | 'GBP';
 export type Screen = 'portfolio' | 'reallocation' | 'baselines' | 'insights' | 'settings';
+export type UserProfile = 'finance' | 'sales' | 'marketing';
 
 export interface ChatMessage {
   id: string;
@@ -77,6 +78,11 @@ export interface Settings {
   defaultTargetProfitMargin: number;
   fxRates: Record<Currency, number>; // rate to AED
   surplusCapPercent: number; // 0–1, default 1.0
+  pins: {
+    finance: string;
+    sales: string;
+    marketing: string;
+  };
 }
 
 export interface CorporatePool {

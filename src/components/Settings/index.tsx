@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useApp } from '../../context/AppContext';
-import type { Currency } from '../../types';
+import type { Currency, UserProfile } from '../../types';
 import { exportJSON, importJSON } from '../../utils/storage';
 
 const CURRENCIES: Currency[] = ['AED', 'USD', 'ZAR', 'SGD', 'AUD', 'MUR', 'EUR', 'GBP'];
@@ -172,6 +172,37 @@ export default function Settings() {
               Import CSV (costs) — attach to event
             </button>
           </div>
+        </div>
+      </Section>
+
+      {/* Profile PINs */}
+      <Section title="Profile PINs">
+        <p className="text-xs text-ink-300 mb-4">Set 4-digit PINs for each role. Share these with your team members.</p>
+        <div className="grid grid-cols-3 gap-4">
+          {(['finance', 'sales', 'marketing'] as UserProfile[]).map(role => (
+            <div key={role}>
+              <label className={labelCls + ' block mb-1 capitalize'}>{role} PIN</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                className={inputCls + ' w-full tracking-widest'}
+                value={settings.pins?.[role] ?? ''}
+                onChange={e => {
+                  const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  dispatch({
+                    type: 'UPDATE_SETTINGS',
+                    payload: { pins: { ...(settings.pins ?? { finance: '1111', sales: '2222', marketing: '3333' }), [role]: v } },
+                  });
+                }}
+                placeholder="1234"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 text-[11px] text-ink-300">
+          Default PINs: Finance <strong>1111</strong> · Sales <strong>2222</strong> · Marketing <strong>3333</strong>. Change these before sharing.
         </div>
       </Section>
 

@@ -1,18 +1,38 @@
 import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useProfile } from '../../context/ProfileContext';
 import { formatPortfolioContext } from '../../utils/formatContext';
-import type { ChatMessage } from '../../types';
+import type { ChatMessage, UserProfile } from '../../types';
 
-const PROMPTS = [
-  'Where should I reallocate budget right now?',
-  'Which event is at most risk?',
-  'What should I do in the next 7 days?',
-  'Summarise my portfolio health',
-  'Singapore strategy to close the gap',
-  'How does Dubai compare to my NY baseline?',
-];
+const PROMPTS: Record<UserProfile | 'finance', string[]> = {
+  finance: [
+    'Where should I reallocate budget right now?',
+    'Which event is at most risk?',
+    'What should I do in the next 7 days?',
+    'Summarise my portfolio health',
+    'Singapore strategy to close the gap',
+    'How does Dubai compare to my NY baseline?',
+  ],
+  sales: [
+    'How many units do I need this week to break even?',
+    'Which event has the best closing rate?',
+    'What is my commission forecast this quarter?',
+    'Which leads should I prioritise right now?',
+    'How am I tracking vs targets across all events?',
+    'What is the pipeline value in reserved and SPA stage?',
+  ],
+  marketing: [
+    'Which event has the best ROAS?',
+    'Where should we increase marketing spend?',
+    'How is our cost per qualified lead trending?',
+    'Which event is generating the most leads?',
+    'Summarise marketing performance across all events',
+    'How does our conversion rate compare across markets?',
+  ],
+};
 
 export default function Insights() {
+  const { profile } = useProfile();
   const { state } = useApp();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -105,7 +125,7 @@ export default function Insights() {
       {/* Preset prompts */}
       <div className="bg-white border-b border-bone px-4 py-2.5 flex-shrink-0 overflow-x-auto">
         <div className="flex gap-2 min-w-max">
-          {PROMPTS.map(p => (
+          {(PROMPTS[profile ?? 'finance']).map(p => (
             <button
               key={p}
               onClick={() => send(p)}
