@@ -177,5 +177,5 @@ export default function ProfileGate() {
 }
 
 function defaultPin(profile: UserProfile): string {
-  return { finance: '1111', sales: '2222', marketing: '3333' }[profile];
+  return { finance: '4567', sales: '0001', marketing: '0987' }[profile];
 }

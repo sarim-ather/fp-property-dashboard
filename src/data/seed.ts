@@ -8,9 +8,9 @@ export const SEED_DATA: AppData = {
     defaultTargetProfitMargin: 0.30,
     surplusCapPercent: 1.0,
     pins: {
-      finance: '1111',
-      sales: '2222',
-      marketing: '3333',
+      finance: '4567',
+      sales: '0001',
+      marketing: '0987',
     },
     fxRates: {
       AED: 1.0,

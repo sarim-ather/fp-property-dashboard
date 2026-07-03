@@ -202,7 +202,7 @@ export default function Settings() {
           ))}
         </div>
         <div className="mt-3 text-[11px] text-ink-300">
-          Default PINs: Finance <strong>1111</strong> · Sales <strong>2222</strong> · Marketing <strong>3333</strong>. Change these before sharing.
+          Default PINs: Finance <strong>4567</strong> · Sales <strong>0001</strong> · Marketing <strong>0987</strong>. Change these at any time.
         </div>
       </Section>
 
