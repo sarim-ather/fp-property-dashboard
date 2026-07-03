@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <rect width="48" height="48" rx="9" fill="#0F3460"/>
+  <!-- F: left stem, top bar, mid bar -->
+  <rect x="8"  y="13" width="4" height="22" fill="#D4AF37"/>
+  <rect x="8"  y="13" width="14" height="4" fill="#D4AF37"/>
+  <rect x="8"  y="22" width="11" height="3" fill="#D4AF37"/>
+  <!-- P: left stem, top cap, right bowl arm, mid bar -->
+  <rect x="26" y="13" width="4"  height="22" fill="#D4AF37"/>
+  <rect x="26" y="13" width="14" height="4"  fill="#D4AF37"/>
+  <rect x="36" y="13" width="4"  height="13" fill="#D4AF37"/>
+  <rect x="26" y="22" width="14" height="3"  fill="#D4AF37"/>
+</svg>
