@@ -1,5 +1,6 @@
 import { useApp } from './context/AppContext';
 import { useProfile } from './context/ProfileContext';
+import { supabase } from './lib/supabase';
 import ProfileGate from './components/ProfileGate';
 import Portfolio from './components/Portfolio';
 import EventDetail from './components/EventDetail';
@@ -107,6 +108,14 @@ export default function App() {
                 </button>
               ))}
             </div>
+
+            {/* Live sync indicator */}
+            {supabase && (
+              <span title="Live sync active" className="flex-shrink-0 flex items-center gap-1 text-[10px] text-emerald-600 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Live
+              </span>
+            )}
 
             {/* Lock / switch profile */}
             <button

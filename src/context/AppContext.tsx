@@ -1,7 +1,16 @@
-import { createContext, useContext, useEffect, useReducer, type Dispatch, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+  useRef,
+  type Dispatch,
+  type ReactNode,
+} from 'react';
 import type { AppData, AppState, CostLineItem, Closure, Event, Reallocation, Screen, Settings } from '../types';
 import { SEED_DATA } from '../data/seed';
 import { loadFromStorage, saveToStorage } from '../utils/storage';
+import { supabase, ROW_ID, TABLE } from '../lib/supabase';
 
 type AppAction =
   | { type: 'IMPORT_DATA'; payload: AppData }
@@ -18,7 +27,8 @@ type AppAction =
   | { type: 'DELETE_CLOSURE'; payload: string }
   | { type: 'ADD_REALLOCATION'; payload: Reallocation }
   | { type: 'SET_SCREEN'; payload: Screen }
-  | { type: 'SELECT_EVENT'; payload: string | null };
+  | { type: 'SELECT_EVENT'; payload: string | null }
+  | { type: '_REMOTE_SYNC'; payload: AppData };
 
 const initialState: AppState = {
   data: loadFromStorage() ?? SEED_DATA,
@@ -28,6 +38,7 @@ const initialState: AppState = {
 function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'IMPORT_DATA':
+    case '_REMOTE_SYNC':
       return { ...state, data: action.payload };
     case 'UPDATE_POOL':
       return { ...state, data: { ...state.data, corporatePool: { totalPool: action.payload } } };
@@ -100,18 +111,83 @@ function reducer(state: AppState, action: AppAction): AppState {
 interface AppContextValue {
   state: AppState;
   dispatch: Dispatch<AppAction>;
+  syncing: boolean;
+  syncError: string | null;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [syncing, setSyncing] = [false, (_: boolean) => {}]; // placeholder for UI
+  const [syncError, setSyncError] = [null as string | null, (_: string | null) => {}];
 
+  // Track whether last write came from remote to avoid re-uploading it
+  const remoteUpdateRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // On mount: fetch latest from Supabase if configured
+  useEffect(() => {
+    if (!supabase) return;
+    supabase
+      .from(TABLE)
+      .select('data')
+      .eq('id', ROW_ID)
+      .single()
+      .then(({ data: row, error }) => {
+        if (!error && row?.data) {
+          remoteUpdateRef.current = true;
+          dispatch({ type: '_REMOTE_SYNC', payload: row.data as AppData });
+        }
+      });
+  }, []);
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!supabase) return;
+    const channel = supabase
+      .channel('app_data_changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: TABLE, filter: `id=eq.${ROW_ID}` },
+        (payload) => {
+          const incoming = (payload.new as { data: AppData }).data;
+          if (incoming) {
+            remoteUpdateRef.current = true;
+            dispatch({ type: '_REMOTE_SYNC', payload: incoming });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase!.removeChannel(channel); };
+  }, []);
+
+  // Write to Supabase on local data change (debounced 600ms, skip remote updates)
   useEffect(() => {
     saveToStorage(state.data);
+
+    if (!supabase) return;
+
+    if (remoteUpdateRef.current) {
+      remoteUpdateRef.current = false;
+      return;
+    }
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      supabase!
+        .from(TABLE)
+        .upsert({ id: ROW_ID, data: state.data, updated_at: new Date().toISOString() })
+        .then(() => {});
+    }, 600);
   }, [state.data]);
 
-  return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={{ state, dispatch, syncing, syncError }}>
+      {children}
+    </AppContext.Provider>
+  );
 }
 
 export function useApp() {
