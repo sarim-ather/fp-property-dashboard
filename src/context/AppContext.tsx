@@ -122,13 +122,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [syncing, setSyncing] = [false, (_: boolean) => {}]; // placeholder for UI
   const [syncError, setSyncError] = [null as string | null, (_: string | null) => {}];
 
+  // Block writes to Supabase until after the initial fetch resolves
+  const isInitializedRef = useRef(false);
   // Track whether last write came from remote to avoid re-uploading it
   const remoteUpdateRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // On mount: fetch latest from Supabase if configured
+  // On mount: fetch latest from Supabase, then mark initialized
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) {
+      isInitializedRef.current = true;
+      return;
+    }
     supabase
       .from(TABLE)
       .select('data')
@@ -139,6 +144,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           remoteUpdateRef.current = true;
           dispatch({ type: '_REMOTE_SYNC', payload: row.data as AppData });
         }
+        // Allow writes only after we know what Supabase has
+        isInitializedRef.current = true;
       });
   }, []);
 
@@ -163,25 +170,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => { supabase!.removeChannel(channel); };
   }, []);
 
-  // Skip writing on the very first render — let the mount fetch win
-  const initialWriteDoneRef = useRef(false);
-
   // Write to Supabase on local data change (debounced 600ms, skip remote updates)
   useEffect(() => {
     saveToStorage(state.data);
 
     if (!supabase) return;
 
+    // Never write before initial fetch — would overwrite Supabase with stale local data
+    if (!isInitializedRef.current) return;
+
     // Cancel any pending write and skip if this update came from remote
     if (remoteUpdateRef.current) {
       remoteUpdateRef.current = false;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      return;
-    }
-
-    // Don't write initial local state — wait for the mount fetch to resolve first
-    if (!initialWriteDoneRef.current) {
-      initialWriteDoneRef.current = true;
       return;
     }
 
