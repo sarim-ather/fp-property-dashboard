@@ -41,14 +41,14 @@ export default function MarketingDashboard() {
   return (
     <div className="h-full overflow-y-auto bg-sand">
       {/* Header */}
-      <div className="bg-brass px-5 py-4 animate-slide-down">
+      <div className="bg-brass px-5 py-4 anim-slide-down">
         <div className="text-xs font-bold text-ink/60 uppercase tracking-widest mb-0.5">Marketing View</div>
         <div className="text-ink font-bold text-lg">{blendedROAS.toFixed(2)}x</div>
         <div className="text-ink/70 text-xs">Blended ROAS · {totalLeads} qualified leads total</div>
       </div>
 
       {/* Summary strip */}
-      <div className="bg-white border-b border-bone px-4 py-3 flex gap-4 animate-fade-in" style={{ animationDelay: '80ms' }}>
+      <div className="bg-white border-b border-bone px-4 py-3 flex gap-4 anim-fade-in" style={{ animationDelay: '80ms' }}>
         <Stat label="Mktg spend" value={aed(totalMarketingSpend)} sub="all events" />
         <div className="w-px bg-bone" />
         <Stat label="Total leads" value={String(totalLeads)} sub="qualified" />
@@ -66,7 +66,7 @@ export default function MarketingDashboard() {
           return (
             <div
               key={event.id}
-              className="bg-white rounded-xl border border-bone p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up"
+              className="bg-white rounded-xl border border-bone p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 anim-fade-in-up"
               style={{ animationDelay: `${120 + idx * 70}ms` }}
             >
               {/* Top row */}

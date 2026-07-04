@@ -43,14 +43,14 @@ export default function SalesDashboard() {
   return (
     <div className="h-full overflow-y-auto bg-sand">
       {/* Header */}
-      <div className="bg-emerald-600 px-5 py-4 animate-slide-down">
+      <div className="bg-emerald-600 px-5 py-4 anim-slide-down">
         <div className="text-xs font-bold text-emerald-100 uppercase tracking-widest mb-0.5">Sales View</div>
         <div className="text-white font-bold text-lg">{aed(totalCommission)}</div>
         <div className="text-emerald-100 text-xs">Total commission earned · {totalClosures} closure{totalClosures !== 1 ? 's' : ''}</div>
       </div>
 
       {/* Summary strip */}
-      <div className="bg-white border-b border-bone px-4 py-3 flex gap-4 animate-fade-in" style={{ animationDelay: '80ms' }}>
+      <div className="bg-white border-b border-bone px-4 py-3 flex gap-4 anim-fade-in" style={{ animationDelay: '80ms' }}>
         <Stat label="Pipeline" value={aed(pipelineValue)} sub="reserved + SPA" />
         <div className="w-px bg-bone" />
         <Stat label="Active events" value={String(activeEvents.length)} sub="live now" />
@@ -68,7 +68,7 @@ export default function SalesDashboard() {
           return (
             <div
               key={event.id}
-              className="bg-white rounded-xl border border-bone p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up"
+              className="bg-white rounded-xl border border-bone p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 anim-fade-in-up"
               style={{ animationDelay: `${120 + idx * 70}ms` }}
             >
               {/* Top row */}

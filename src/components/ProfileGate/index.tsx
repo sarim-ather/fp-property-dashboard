@@ -61,13 +61,13 @@ export default function ProfileGate() {
   return (
     <div className="h-screen bg-sand flex flex-col items-center justify-center px-6 gap-7">
       {/* Logo */}
-      <div className="text-center animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+      <div className="text-center anim-fade-in-up" style={{ animationDelay: '0ms' }}>
         <div className="text-2xl font-bold text-brass tracking-widest mb-1">FP</div>
         <div className="text-xs text-ink-300 uppercase tracking-widest">Roadshow Dashboard</div>
       </div>
 
       {/* Role picker */}
-      <div className="w-full max-w-xs animate-fade-in-up" style={{ animationDelay: '80ms' }}>
+      <div className="w-full max-w-xs anim-fade-in-up" style={{ animationDelay: '80ms' }}>
         <p className="text-xs font-semibold text-ink-300 uppercase tracking-widest text-center mb-3">
           Select your role
         </p>
@@ -80,7 +80,7 @@ export default function ProfileGate() {
                 key={role.id}
                 onClick={() => setSelected(role.id)}
                 style={{ animationDelay: `${120 + i * 70}ms` }}
-                className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 animate-fade-in-up active:scale-[0.98] ${
+                className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 anim-fade-in-up active:scale-[0.98] ${
                   isActive
                     ? `${c.activeBg} ${c.activeText} border-transparent shadow-md`
                     : `bg-white ${c.text} border-bone hover:border-current hover:shadow-sm`
@@ -98,17 +98,17 @@ export default function ProfileGate() {
 
       {/* PIN entry */}
       {selected && (
-        <div className="w-full max-w-xs flex flex-col items-center gap-4 animate-slide-down">
+        <div className="w-full max-w-xs flex flex-col items-center gap-4 anim-slide-down">
           <p className="text-xs text-ink-300 uppercase tracking-widest font-semibold">Enter PIN</p>
 
           {/* PIN dots */}
-          <div className={`flex gap-3 ${shaking ? 'animate-shake' : ''}`}>
+          <div className={`flex gap-3 ${shaking ? 'anim-shake' : ''}`}>
             {[0, 1, 2, 3].map(i => (
               <div
                 key={i}
                 className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
                   pin.length > i
-                    ? `bg-navy border-navy ${poppedDot === i ? 'animate-dot-pop' : ''}`
+                    ? `bg-navy border-navy ${poppedDot === i ? 'anim-dot-pop' : ''}`
                     : 'border-ink-200 bg-white'
                 }`}
               />
@@ -150,7 +150,7 @@ export default function ProfileGate() {
           </div>
 
           {error && (
-            <p className="text-xs text-red-500 font-medium animate-fade-in">{error}</p>
+            <p className="text-xs text-red-500 font-medium anim-fade-in">{error}</p>
           )}
 
           <button
@@ -162,7 +162,7 @@ export default function ProfileGate() {
         </div>
       )}
 
-      <p className="text-[11px] text-ink-200 text-center animate-fade-in" style={{ animationDelay: '400ms' }}>
+      <p className="text-[11px] text-ink-200 text-center anim-fade-in" style={{ animationDelay: '400ms' }}>
         Contact Finance to get your PIN
       </p>
     </div>

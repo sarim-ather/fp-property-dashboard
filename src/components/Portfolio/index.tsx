@@ -187,7 +187,7 @@ export default function Portfolio() {
             { label: 'Portfolio Net P&L',      value: `${signPrefix(portfolio.netPnL)}${fmtAED(portfolio.netPnL, true)}`, light: true, pos: portfolio.netPnL >= 0 },
             { label: 'Portfolio ROI',          value: fmtPct(portfolio.roi),                  light: true, pos: portfolio.roi >= 0 },
           ].map((tile, i) => (
-            <div key={tile.label} className="animate-fade-in-up" style={{ animationDelay: `${i * 60}ms` }}>
+            <div key={tile.label} className="anim-fade-in-up" style={{ animationDelay: `${i * 60}ms` }}>
               <KPITile {...tile} sub="" />
             </div>
           ))}
@@ -207,7 +207,7 @@ export default function Portfolio() {
                 </div>
                 <div className="flex flex-col gap-3">
                   {stageEvents.map((event, cardIdx) => (
-                    <div key={event.id} className="animate-fade-in-up" style={{ animationDelay: `${cardIdx * 70}ms` }}>
+                    <div key={event.id} className="anim-fade-in-up" style={{ animationDelay: `${cardIdx * 70}ms` }}>
                       <EventCard
                         event={event}
                         metrics={computeEventMetrics(event, costLineItems, closures)}

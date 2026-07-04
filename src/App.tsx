@@ -131,7 +131,7 @@ export default function App() {
         </nav>
       )}
 
-      <main key={showEventDetail ? 'event' : `${profile}-${screen}`} className="flex-1 overflow-hidden animate-fade-in">
+      <main key={showEventDetail ? 'event' : `${profile}-${screen}`} className="flex-1 overflow-hidden anim-fade-in">
         {renderMain()}
       </main>
     </div>
