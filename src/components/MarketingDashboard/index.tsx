@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { computeEventMetrics } from '../../utils/calculations';
 
@@ -6,12 +7,25 @@ function aed(n: number) {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  Planned:    'bg-ink-100 text-ink-400',
-  'Pre-Event':'bg-blue-50 text-blue-600',
-  Live:       'bg-brass text-ink',
+  Planned:     'bg-slate-100 text-slate-600',
+  'Pre-Event': 'bg-blue-50 text-blue-600',
+  Live:        'bg-brass text-ink',
   'Post-Event':'bg-amber-50 text-amber-700',
-  Closed:     'bg-bone text-ink-300',
+  Closed:      'bg-bone text-ink-300',
 };
+
+function AnimatedBar({ pct, colorClass, delay = 0 }: { pct: number; colorClass: string; delay?: number }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(pct), 80 + delay);
+    return () => clearTimeout(t);
+  }, [pct, delay]);
+  return (
+    <div className="h-1.5 bg-bone rounded-full overflow-hidden">
+      <div className={`h-full rounded-full bar-enter ${colorClass}`} style={{ width: `${width}%` }} />
+    </div>
+  );
+}
 
 export default function MarketingDashboard() {
   const { state } = useApp();
@@ -27,14 +41,14 @@ export default function MarketingDashboard() {
   return (
     <div className="h-full overflow-y-auto bg-sand">
       {/* Header */}
-      <div className="bg-brass px-5 py-4">
+      <div className="bg-brass px-5 py-4 animate-slide-down">
         <div className="text-xs font-bold text-ink/60 uppercase tracking-widest mb-0.5">Marketing View</div>
         <div className="text-ink font-bold text-lg">{blendedROAS.toFixed(2)}x</div>
         <div className="text-ink/70 text-xs">Blended ROAS · {totalLeads} qualified leads total</div>
       </div>
 
       {/* Summary strip */}
-      <div className="bg-white border-b border-bone px-4 py-3 flex gap-4">
+      <div className="bg-white border-b border-bone px-4 py-3 flex gap-4 animate-fade-in" style={{ animationDelay: '80ms' }}>
         <Stat label="Mktg spend" value={aed(totalMarketingSpend)} sub="all events" />
         <div className="w-px bg-bone" />
         <Stat label="Total leads" value={String(totalLeads)} sub="qualified" />
@@ -44,12 +58,17 @@ export default function MarketingDashboard() {
 
       {/* Per-event cards */}
       <div className="px-4 py-4 flex flex-col gap-3">
-        {events.map((event, i) => {
-          const m = allMetrics[i];
+        {events.map((event, idx) => {
+          const m = allMetrics[idx];
           const roasColor = m.roas >= 3 ? 'text-emerald-600' : m.roas >= 1 ? 'text-navy' : 'text-red-500';
+          const roasBarColor = m.roas >= 1 ? 'bg-brass' : 'bg-red-400';
 
           return (
-            <div key={event.id} className="bg-white rounded-xl border border-bone p-4 shadow-sm">
+            <div
+              key={event.id}
+              className="bg-white rounded-xl border border-bone p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up"
+              style={{ animationDelay: `${120 + idx * 70}ms` }}
+            >
               {/* Top row */}
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -77,7 +96,7 @@ export default function MarketingDashboard() {
                 </div>
               </div>
 
-              {/* CPQL & ROAS bar */}
+              {/* CPQL & conversion */}
               <div className="flex gap-3 text-xs">
                 <div className="flex-1 bg-sand rounded-lg px-3 py-2">
                   <div className="text-ink-300 mb-0.5">Cost per lead</div>
@@ -99,19 +118,18 @@ export default function MarketingDashboard() {
                 </div>
               </div>
 
-              {/* ROAS visual bar */}
+              {/* ROAS bar */}
               {m.marketingSpend > 0 && (
                 <div className="mt-3">
                   <div className="flex justify-between text-[11px] text-ink-300 mb-1">
                     <span>Commission vs spend</span>
-                    <span className={roasColor + ' font-semibold'}>{m.roas.toFixed(2)}x return</span>
+                    <span className={`${roasColor} font-semibold`}>{m.roas.toFixed(2)}x return</span>
                   </div>
-                  <div className="h-1.5 bg-bone rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${m.roas >= 1 ? 'bg-brass' : 'bg-red-400'}`}
-                      style={{ width: `${Math.min(m.roas / 5, 1) * 100}%` }}
-                    />
-                  </div>
+                  <AnimatedBar
+                    pct={Math.min(m.roas / 5, 1) * 100}
+                    colorClass={roasBarColor}
+                    delay={idx * 70}
+                  />
                 </div>
               )}
             </div>

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { computeEventMetrics } from '../../utils/calculations';
 
@@ -6,12 +7,25 @@ function aed(n: number) {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  Planned:    'bg-ink-100 text-ink-400',
-  'Pre-Event':'bg-blue-50 text-blue-600',
-  Live:       'bg-emerald-50 text-emerald-700',
+  Planned:     'bg-slate-100 text-slate-600',
+  'Pre-Event': 'bg-blue-50 text-blue-600',
+  Live:        'bg-emerald-50 text-emerald-700',
   'Post-Event':'bg-amber-50 text-amber-700',
-  Closed:     'bg-bone text-ink-300',
+  Closed:      'bg-bone text-ink-300',
 };
+
+function AnimatedBar({ pct, colorClass, delay = 0 }: { pct: number; colorClass: string; delay?: number }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(pct), 80 + delay);
+    return () => clearTimeout(t);
+  }, [pct, delay]);
+  return (
+    <div className="h-1.5 bg-bone rounded-full overflow-hidden">
+      <div className={`h-full rounded-full bar-enter ${colorClass}`} style={{ width: `${width}%` }} />
+    </div>
+  );
+}
 
 export default function SalesDashboard() {
   const { state } = useApp();
@@ -29,14 +43,14 @@ export default function SalesDashboard() {
   return (
     <div className="h-full overflow-y-auto bg-sand">
       {/* Header */}
-      <div className="bg-emerald-600 px-5 py-4">
+      <div className="bg-emerald-600 px-5 py-4 animate-slide-down">
         <div className="text-xs font-bold text-emerald-100 uppercase tracking-widest mb-0.5">Sales View</div>
         <div className="text-white font-bold text-lg">{aed(totalCommission)}</div>
         <div className="text-emerald-100 text-xs">Total commission earned · {totalClosures} closure{totalClosures !== 1 ? 's' : ''}</div>
       </div>
 
       {/* Summary strip */}
-      <div className="bg-white border-b border-bone px-4 py-3 flex gap-4">
+      <div className="bg-white border-b border-bone px-4 py-3 flex gap-4 animate-fade-in" style={{ animationDelay: '80ms' }}>
         <Stat label="Pipeline" value={aed(pipelineValue)} sub="reserved + SPA" />
         <div className="w-px bg-bone" />
         <Stat label="Active events" value={String(activeEvents.length)} sub="live now" />
@@ -46,13 +60,17 @@ export default function SalesDashboard() {
 
       {/* Per-event cards */}
       <div className="px-4 py-4 flex flex-col gap-3">
-        {events.map(event => {
+        {events.map((event, idx) => {
           const m = computeEventMetrics(event, costLineItems, closures);
           const eventClosures = closures.filter(c => c.eventId === event.id);
           const progress = Math.min(m.progressToBreakEven, 1);
 
           return (
-            <div key={event.id} className="bg-white rounded-xl border border-bone p-4 shadow-sm">
+            <div
+              key={event.id}
+              className="bg-white rounded-xl border border-bone p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up"
+              style={{ animationDelay: `${120 + idx * 70}ms` }}
+            >
               {/* Top row */}
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -72,12 +90,11 @@ export default function SalesDashboard() {
                     {(progress * 100).toFixed(0)}%
                   </span>
                 </div>
-                <div className="h-1.5 bg-bone rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${progress >= 1 ? 'bg-emerald-500' : 'bg-navy'}`}
-                    style={{ width: `${progress * 100}%` }}
-                  />
-                </div>
+                <AnimatedBar
+                  pct={progress * 100}
+                  colorClass={progress >= 1 ? 'bg-emerald-500' : 'bg-navy'}
+                  delay={idx * 70}
+                />
                 {m.unitsStillNeeded > 0 && event.stage !== 'Closed' && (
                   <div className="text-[11px] text-amber-600 mt-1">
                     {m.unitsStillNeeded} unit{m.unitsStillNeeded !== 1 ? 's' : ''} still needed to break even
@@ -110,9 +127,9 @@ export default function SalesDashboard() {
                       <div className="flex items-center gap-2">
                         <span className="text-ink font-medium">{aed(c.commissionEarned)}</span>
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                          c.status === 'Paid' ? 'bg-emerald-50 text-emerald-700' :
+                          c.status === 'Paid'       ? 'bg-emerald-50 text-emerald-700' :
                           c.status === 'SPA Signed' ? 'bg-blue-50 text-blue-600' :
-                          'bg-amber-50 text-amber-600'
+                                                      'bg-amber-50 text-amber-600'
                         }`}>{c.status}</span>
                       </div>
                     </div>

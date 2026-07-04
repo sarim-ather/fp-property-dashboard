@@ -90,15 +90,15 @@ export default function App() {
                 <button
                   key={item.id}
                   onClick={() => dispatch({ type: 'SET_SCREEN', payload: item.id })}
-                  className={`px-4 py-2 text-xs font-medium rounded transition-colors ${
+                  className={`px-4 py-2 text-xs font-medium rounded transition-all duration-200 active:scale-95 ${
                     screen === item.id
                       ? item.id === 'insights'
-                        ? 'bg-brass text-ink'
+                        ? 'bg-brass text-ink shadow-sm'
                         : profile === 'sales'
-                          ? 'bg-emerald-600 text-white'
+                          ? 'bg-emerald-600 text-white shadow-sm'
                           : profile === 'marketing'
-                            ? 'bg-brass text-ink'
-                            : 'bg-navy text-white'
+                            ? 'bg-brass text-ink shadow-sm'
+                            : 'bg-navy text-white shadow-sm'
                       : item.id === 'insights'
                         ? 'text-brass hover:bg-brass/10'
                         : 'text-ink-500 hover:text-ink hover:bg-bone'
@@ -131,7 +131,7 @@ export default function App() {
         </nav>
       )}
 
-      <main className="flex-1 overflow-hidden">
+      <main key={showEventDetail ? 'event' : `${profile}-${screen}`} className="flex-1 overflow-hidden animate-fade-in">
         {renderMain()}
       </main>
     </div>

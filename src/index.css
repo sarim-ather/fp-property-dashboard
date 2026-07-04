@@ -25,4 +25,19 @@
   .text-navy-200 { color: #b8c9e0; }
   .bg-brass-pale { background-color: #FAF0D7; }
   .text-brass-dark { color: #8B6914; }
+
+  /* Stagger delay helpers */
+  .delay-0   { animation-delay: 0ms; }
+  .delay-60  { animation-delay: 60ms; }
+  .delay-120 { animation-delay: 120ms; }
+  .delay-180 { animation-delay: 180ms; }
+  .delay-240 { animation-delay: 240ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-360 { animation-delay: 360ms; }
+  .delay-420 { animation-delay: 420ms; }
+
+  /* Bar grow animation */
+  .bar-enter {
+    transition: width 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  }
 }

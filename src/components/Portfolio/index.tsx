@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { useApp } from '../../context/AppContext';
 import { computeEventMetrics, computeAvailableToReallocate, computePortfolioSummary } from '../../utils/calculations';
 import { fmtAED, fmtDateRange, fmtPct, signClass, signPrefix, uid } from '../../utils/format';
@@ -180,11 +180,17 @@ export default function Portfolio() {
           </button>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <KPITile label="Corporate Pool" value={fmtAED(corporatePool.totalPool, true)} sub="" light />
-          <KPITile label="Allocated" value={fmtAED(totalAllocated, true)} sub="" light />
-          <KPITile label="Available to Reallocate" value={fmtAED(available, true)} sub="" highlight />
-          <KPITile label="Portfolio Net P&L" value={`${signPrefix(portfolio.netPnL)}${fmtAED(portfolio.netPnL, true)}`} sub="" pos={portfolio.netPnL >= 0} light />
-          <KPITile label="Portfolio ROI" value={fmtPct(portfolio.roi)} sub="" pos={portfolio.roi >= 0} light />
+          {[
+            { label: 'Corporate Pool',         value: fmtAED(corporatePool.totalPool, true), light: true },
+            { label: 'Allocated',              value: fmtAED(totalAllocated, true),           light: true },
+            { label: 'Available to Reallocate',value: fmtAED(available, true),                highlight: true },
+            { label: 'Portfolio Net P&L',      value: `${signPrefix(portfolio.netPnL)}${fmtAED(portfolio.netPnL, true)}`, light: true, pos: portfolio.netPnL >= 0 },
+            { label: 'Portfolio ROI',          value: fmtPct(portfolio.roi),                  light: true, pos: portfolio.roi >= 0 },
+          ].map((tile, i) => (
+            <div key={tile.label} className="animate-fade-in-up" style={{ animationDelay: `${i * 60}ms` }}>
+              <KPITile {...tile} sub="" />
+            </div>
+          ))}
         </div>
       </div>
 
@@ -200,17 +206,18 @@ export default function Portfolio() {
                   <span className="text-xs text-ink-300">{stageEvents.length}</span>
                 </div>
                 <div className="flex flex-col gap-3">
-                  {stageEvents.map(event => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      metrics={computeEventMetrics(event, costLineItems, closures)}
-                      onSelect={() => dispatch({ type: 'SELECT_EVENT', payload: event.id })}
-                      onEdit={() => setEditingEvent(event)}
-                      onDelete={() => {
-                        if (confirm(`Delete "${event.name}"?`)) dispatch({ type: 'DELETE_EVENT', payload: event.id });
-                      }}
-                    />
+                  {stageEvents.map((event, cardIdx) => (
+                    <div key={event.id} className="animate-fade-in-up" style={{ animationDelay: `${cardIdx * 70}ms` }}>
+                      <EventCard
+                        event={event}
+                        metrics={computeEventMetrics(event, costLineItems, closures)}
+                        onSelect={() => dispatch({ type: 'SELECT_EVENT', payload: event.id })}
+                        onEdit={() => setEditingEvent(event)}
+                        onDelete={() => {
+                          if (confirm(`Delete "${event.name}"?`)) dispatch({ type: 'DELETE_EVENT', payload: event.id });
+                        }}
+                      />
+                    </div>
                   ))}
                   {stageEvents.length === 0 && (
                     <div className="border-2 border-dashed border-bone rounded-lg p-4 text-center text-xs text-ink-300">
@@ -256,6 +263,22 @@ function KPITile({ label, value, sub, highlight, light, pos }: {
   );
 }
 
+function AnimatedBar({ pct, colorClass, delay = 0 }: { pct: number; colorClass: string; delay?: number }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(pct), 80 + delay);
+    return () => clearTimeout(t);
+  }, [pct, delay]);
+  return (
+    <div className="h-1.5 bg-bone rounded-full overflow-hidden">
+      <div
+        className={`h-full rounded-full bar-enter ${colorClass}`}
+        style={{ width: `${width}%` }}
+      />
+    </div>
+  );
+}
+
 function EventCard({ event, metrics, onSelect, onEdit, onDelete }: {
   event: Event;
   metrics: ReturnType<typeof computeEventMetrics>;
@@ -270,7 +293,7 @@ function EventCard({ event, metrics, onSelect, onEdit, onDelete }: {
 
   return (
     <div
-      className="bg-white rounded-lg border border-bone shadow-sm hover:border-navy/40 hover:shadow-md transition-all cursor-pointer group"
+      className="bg-white rounded-lg border border-bone shadow-sm hover:border-navy/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
       onClick={onSelect}
     >
       <div className="p-3.5">
@@ -279,15 +302,15 @@ function EventCard({ event, metrics, onSelect, onEdit, onDelete }: {
             <div className="font-semibold text-sm text-ink truncate">{event.name}</div>
             <div className="text-xs text-ink-300 mt-0.5">{event.city} · {event.currency}</div>
           </div>
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
             <button
               onClick={e => { e.stopPropagation(); onEdit(); }}
-              className="text-ink-300 hover:text-navy text-xs px-1"
+              className="text-ink-300 hover:text-navy text-xs px-1 transition-colors"
               title="Edit"
             >✎</button>
             <button
               onClick={e => { e.stopPropagation(); onDelete(); }}
-              className="text-ink-300 hover:text-red-600 text-xs px-1"
+              className="text-ink-300 hover:text-red-600 text-xs px-1 transition-colors"
               title="Delete"
             >✕</button>
           </div>
@@ -301,12 +324,7 @@ function EventCard({ event, metrics, onSelect, onEdit, onDelete }: {
             <span>Spend</span>
             <span>{fmtAED(metrics.totalCostAED, true)} / {fmtAED(event.allocatedBudget, true)}</span>
           </div>
-          <div className="h-1.5 bg-bone rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${overBudget ? 'bg-red-500' : 'bg-navy'}`}
-              style={{ width: `${spendPct}%` }}
-            />
-          </div>
+          <AnimatedBar pct={spendPct} colorClass={overBudget ? 'bg-red-500' : 'bg-navy'} />
         </div>
 
         {/* Metrics row */}
