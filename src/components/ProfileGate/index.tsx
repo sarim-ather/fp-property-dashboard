@@ -1,18 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import { useProfile } from '../../context/ProfileContext';
 import type { UserProfile } from '../../types';
 
-const ROLES: { id: UserProfile; label: string; desc: string; color: string }[] = [
-  { id: 'finance',   label: 'Finance',   desc: 'Full P&L, budgets, reallocation pool', color: 'navy' },
-  { id: 'sales',     label: 'Sales',     desc: 'Closures, commission, pipeline',        color: 'emerald' },
-  { id: 'marketing', label: 'Marketing', desc: 'ROAS, leads, marketing spend',          color: 'brass' },
+const ROLES: { id: UserProfile; label: string; desc: string; color: string; bg: string; active: string; text: string }[] = [
+  { id: 'finance',   label: 'Finance',   desc: 'Full P&L, budgets, reallocation',  color: '#0F3460', bg: 'bg-white',       active: 'bg-navy text-white',        text: 'text-navy' },
+  { id: 'sales',     label: 'Sales',     desc: 'Closures, commission, pipeline',   color: '#059669', bg: 'bg-white',       active: 'bg-emerald-600 text-white',  text: 'text-emerald-700' },
+  { id: 'marketing', label: 'Marketing', desc: 'ROAS, leads, spend',               color: '#B8860B', bg: 'bg-white',       active: 'bg-brass text-ink',          text: 'text-brass' },
 ];
 
-const COLOR = {
-  navy:    { activeBg: 'bg-navy',        activeText: 'text-white',  text: 'text-navy',        border: 'border-navy/30' },
-  emerald: { activeBg: 'bg-emerald-600', activeText: 'text-white',  text: 'text-emerald-700', border: 'border-emerald-300' },
-  brass:   { activeBg: 'bg-brass',       activeText: 'text-ink',    text: 'text-brass',       border: 'border-brass/40' },
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 24 },
+  show:   { opacity: 1, y: 0, transition: { type: 'spring' as const, damping: 22, stiffness: 280 } },
 };
 
 export default function ProfileGate() {
@@ -22,27 +26,19 @@ export default function ProfileGate() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [shaking, setShaking] = useState(false);
-  const [poppedDot, setPoppedDot] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (selected) {
-      setPin('');
-      setError('');
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (selected) { setPin(''); setError(''); setTimeout(() => inputRef.current?.focus(), 80); }
   }, [selected]);
 
-  function handlePinChange(val: string) {
-    if (!/^\d*$/.test(val) || val.length > 4) return;
-    if (val.length > pin.length) {
-      const newIdx = val.length - 1;
-      setPoppedDot(newIdx);
-      setTimeout(() => setPoppedDot(-1), 200);
-    }
-    setPin(val);
+  function handleKey(k: string) {
+    if (k === '⌫') { setPin(p => p.slice(0, -1)); setError(''); return; }
+    if (pin.length >= 4) return;
+    const next = pin + k;
+    setPin(next);
     setError('');
-    if (val.length === 4) verify(val);
+    if (next.length === 4) verify(next);
   }
 
   function verify(value: string) {
@@ -54,121 +50,131 @@ export default function ProfileGate() {
       setShaking(true);
       setError('Incorrect PIN');
       setPin('');
-      setTimeout(() => { setShaking(false); inputRef.current?.focus(); }, 420);
+      setTimeout(() => { setShaking(false); inputRef.current?.focus(); }, 500);
     }
   }
 
   return (
-    <div className="h-screen bg-sand flex flex-col items-center justify-center px-6 gap-7">
+    <div className="h-screen bg-sand flex flex-col items-center justify-center px-6 gap-6 overflow-hidden">
       {/* Logo */}
-      <div className="text-center anim-fade-in-up" style={{ animationDelay: '0ms' }}>
-        <div className="text-2xl font-bold text-brass tracking-widest mb-1">FP</div>
-        <div className="text-xs text-ink-300 uppercase tracking-widest">Roadshow Dashboard</div>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="text-center"
+      >
+        <div className="text-3xl font-bold text-brass tracking-widest mb-1">FP</div>
+        <div className="text-[11px] text-ink-300 uppercase tracking-widest">Roadshow Dashboard</div>
+      </motion.div>
 
       {/* Role picker */}
-      <div className="w-full max-w-xs anim-fade-in-up" style={{ animationDelay: '80ms' }}>
-        <p className="text-xs font-semibold text-ink-300 uppercase tracking-widest text-center mb-3">
+      <motion.div className="w-full max-w-xs" variants={container} initial="hidden" animate="show">
+        <motion.p variants={item} className="text-[11px] font-semibold text-ink-300 uppercase tracking-widest text-center mb-4">
           Select your role
-        </p>
-        <div className="flex flex-col gap-2.5">
-          {ROLES.map((role, i) => {
-            const c = COLOR[role.color as keyof typeof COLOR];
-            const isActive = selected === role.id;
-            return (
-              <button
-                key={role.id}
-                onClick={() => setSelected(role.id)}
-                style={{ animationDelay: `${120 + i * 70}ms` }}
-                className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 anim-fade-in-up active:scale-[0.98] ${
-                  isActive
-                    ? `${c.activeBg} ${c.activeText} border-transparent shadow-md`
-                    : `bg-white ${c.text} border-bone hover:border-current hover:shadow-sm`
-                }`}
-              >
-                <div className="font-semibold text-sm">{role.label}</div>
-                <div className={`text-xs mt-0.5 ${isActive ? 'opacity-80' : 'text-ink-300'}`}>
-                  {role.desc}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        </motion.p>
+        {ROLES.map(role => {
+          const isActive = selected === role.id;
+          return (
+            <motion.button
+              key={role.id}
+              variants={item}
+              whileTap={{ scale: 0.97 }}
+              whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}
+              onClick={() => setSelected(role.id)}
+              className={`w-full text-left px-4 py-3.5 rounded-xl border-2 mb-2.5 transition-colors duration-200 ${
+                isActive ? role.active + ' border-transparent shadow-lg' : `bg-white border-bone ${role.text}`
+              }`}
+            >
+              <div className="font-semibold text-sm">{role.label}</div>
+              <div className={`text-xs mt-0.5 ${isActive ? 'opacity-75' : 'text-ink-300'}`}>{role.desc}</div>
+            </motion.button>
+          );
+        })}
+      </motion.div>
 
       {/* PIN entry */}
-      {selected && (
-        <div className="w-full max-w-xs flex flex-col items-center gap-4 anim-slide-down">
-          <p className="text-xs text-ink-300 uppercase tracking-widest font-semibold">Enter PIN</p>
-
-          {/* PIN dots */}
-          <div className={`flex gap-3 ${shaking ? 'anim-shake' : ''}`}>
-            {[0, 1, 2, 3].map(i => (
-              <div
-                key={i}
-                className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
-                  pin.length > i
-                    ? `bg-navy border-navy ${poppedDot === i ? 'anim-dot-pop' : ''}`
-                    : 'border-ink-200 bg-white'
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* Hidden numeric input */}
-          <input
-            ref={inputRef}
-            type="tel"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={pin}
-            onChange={e => handlePinChange(e.target.value)}
-            className="opacity-0 absolute pointer-events-none"
-            maxLength={4}
-          />
-
-          {/* Numpad */}
-          <div className="grid grid-cols-3 gap-2 w-full">
-            {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((k, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  if (k === '') return;
-                  if (k === '⌫') { handlePinChange(pin.slice(0, -1)); return; }
-                  handlePinChange(pin + k);
-                }}
-                disabled={k === ''}
-                className={`h-12 rounded-xl text-lg font-semibold transition-all duration-100 active:scale-90 ${
-                  k === '' ? 'invisible' :
-                  k === '⌫' ? 'bg-bone text-ink-400 hover:bg-ink-100 active:bg-ink-200' :
-                  'bg-white border border-bone text-ink hover:bg-bone active:bg-ink-100 shadow-sm'
-                }`}
-              >
-                {k}
-              </button>
-            ))}
-          </div>
-
-          {error && (
-            <p className="text-xs text-red-500 font-medium anim-fade-in">{error}</p>
-          )}
-
-          <button
-            onClick={() => inputRef.current?.focus()}
-            className="text-xs text-ink-300 border border-bone rounded-lg px-4 py-2 bg-white hover:bg-bone transition-colors"
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            key="pin"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+            className="w-full max-w-xs flex flex-col items-center gap-4"
           >
-            Tap to type PIN
-          </button>
-        </div>
-      )}
+            <p className="text-[11px] text-ink-300 uppercase tracking-widest font-semibold">Enter PIN</p>
 
-      <p className="text-[11px] text-ink-200 text-center anim-fade-in" style={{ animationDelay: '400ms' }}>
+            {/* Dots */}
+            <motion.div
+              className="flex gap-3"
+              animate={shaking ? { x: [-8, 8, -6, 6, -3, 3, 0] } : { x: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              {[0, 1, 2, 3].map(i => (
+                <motion.div
+                  key={i}
+                  animate={{ scale: pin.length > i ? 1 : 0.85, backgroundColor: pin.length > i ? '#0F3460' : '#ffffff' }}
+                  transition={{ type: 'spring', damping: 15, stiffness: 400 }}
+                  className="w-4 h-4 rounded-full border-2 border-navy/30"
+                />
+              ))}
+            </motion.div>
+
+            <input
+              ref={inputRef}
+              type="tel" inputMode="numeric" pattern="[0-9]*"
+              value={pin}
+              onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setPin(v); setError(''); if (v.length === 4) verify(v); }}
+              className="opacity-0 absolute pointer-events-none"
+              maxLength={4}
+            />
+
+            {/* Numpad */}
+            <div className="grid grid-cols-3 gap-2 w-full">
+              {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((k, i) => (
+                <motion.button
+                  key={i}
+                  whileTap={{ scale: k ? 0.88 : 1, backgroundColor: k === '⌫' ? '#d1d5db' : '#e5e0d8' }}
+                  onClick={() => k && handleKey(k)}
+                  disabled={!k}
+                  className={`h-12 rounded-xl text-lg font-semibold ${
+                    !k ? 'invisible' :
+                    k === '⌫' ? 'bg-bone text-ink-400' :
+                    'bg-white border border-bone text-ink shadow-sm'
+                  }`}
+                >
+                  {k}
+                </motion.button>
+              ))}
+            </div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="text-xs text-red-500 font-medium"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            <button onClick={() => inputRef.current?.focus()} className="text-xs text-ink-300 border border-bone rounded-lg px-4 py-2 bg-white">
+              Tap to type PIN
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.p
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+        className="text-[11px] text-ink-200 text-center"
+      >
         Contact Finance to get your PIN
-      </p>
+      </motion.p>
     </div>
   );
 }
 
-function defaultPin(profile: UserProfile): string {
-  return { finance: '4567', sales: '0001', marketing: '0987' }[profile];
-}
+function defaultPin(p: UserProfile) { return { finance: '4567', sales: '0001', marketing: '0987' }[p]; }

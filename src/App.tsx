@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from './context/AppContext';
 import { useProfile } from './context/ProfileContext';
 import { supabase } from './lib/supabase';
@@ -131,9 +132,18 @@ export default function App() {
         </nav>
       )}
 
-      <main key={showEventDetail ? 'event' : `${profile}-${screen}`} className="flex-1 overflow-hidden anim-fade-in">
-        {renderMain()}
-      </main>
+      <AnimatePresence mode="wait">
+        <motion.main
+          key={showEventDetail ? 'event' : `${profile}-${screen}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          className="flex-1 overflow-hidden"
+        >
+          {renderMain()}
+        </motion.main>
+      </AnimatePresence>
     </div>
   );
 }

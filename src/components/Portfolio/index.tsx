@@ -1,4 +1,5 @@
-import { useState, useEffect, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import { computeEventMetrics, computeAvailableToReallocate, computePortfolioSummary } from '../../utils/calculations';
 import { fmtAED, fmtDateRange, fmtPct, signClass, signPrefix, uid } from '../../utils/format';
@@ -179,19 +180,26 @@ export default function Portfolio() {
             + New Event
           </button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <motion.div
+          className="grid grid-cols-2 sm:grid-cols-5 gap-3"
+          initial="hidden" animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
+        >
           {[
-            { label: 'Corporate Pool',         value: fmtAED(corporatePool.totalPool, true), light: true },
-            { label: 'Allocated',              value: fmtAED(totalAllocated, true),           light: true },
-            { label: 'Available to Reallocate',value: fmtAED(available, true),                highlight: true },
-            { label: 'Portfolio Net P&L',      value: `${signPrefix(portfolio.netPnL)}${fmtAED(portfolio.netPnL, true)}`, light: true, pos: portfolio.netPnL >= 0 },
-            { label: 'Portfolio ROI',          value: fmtPct(portfolio.roi),                  light: true, pos: portfolio.roi >= 0 },
-          ].map((tile, i) => (
-            <div key={tile.label} className="anim-fade-in-up" style={{ animationDelay: `${i * 60}ms` }}>
+            { label: 'Corporate Pool',          value: fmtAED(corporatePool.totalPool, true), light: true },
+            { label: 'Allocated',               value: fmtAED(totalAllocated, true),           light: true },
+            { label: 'Available to Reallocate', value: fmtAED(available, true),                highlight: true },
+            { label: 'Portfolio Net P&L',       value: `${signPrefix(portfolio.netPnL)}${fmtAED(portfolio.netPnL, true)}`, light: true, pos: portfolio.netPnL >= 0 },
+            { label: 'Portfolio ROI',           value: fmtPct(portfolio.roi),                  light: true, pos: portfolio.roi >= 0 },
+          ].map(tile => (
+            <motion.div
+              key={tile.label}
+              variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0, transition: { type: 'spring', damping: 20, stiffness: 280 } } }}
+            >
               <KPITile {...tile} sub="" />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* Kanban board */}
@@ -205,9 +213,16 @@ export default function Portfolio() {
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded ${STAGE_COLORS[stage]}`}>{stage}</span>
                   <span className="text-xs text-ink-300">{stageEvents.length}</span>
                 </div>
-                <div className="flex flex-col gap-3">
-                  {stageEvents.map((event, cardIdx) => (
-                    <div key={event.id} className="anim-fade-in-up" style={{ animationDelay: `${cardIdx * 70}ms` }}>
+                <motion.div
+                  className="flex flex-col gap-3"
+                  initial="hidden" animate="show"
+                  variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
+                >
+                  {stageEvents.map(event => (
+                    <motion.div
+                      key={event.id}
+                      variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: 'spring', damping: 22, stiffness: 260 } } }}
+                    >
                       <EventCard
                         event={event}
                         metrics={computeEventMetrics(event, costLineItems, closures)}
@@ -217,14 +232,14 @@ export default function Portfolio() {
                           if (confirm(`Delete "${event.name}"?`)) dispatch({ type: 'DELETE_EVENT', payload: event.id });
                         }}
                       />
-                    </div>
+                    </motion.div>
                   ))}
                   {stageEvents.length === 0 && (
                     <div className="border-2 border-dashed border-bone rounded-lg p-4 text-center text-xs text-ink-300">
                       No events
                     </div>
                   )}
-                </div>
+                </motion.div>
               </div>
             );
           })}
@@ -263,17 +278,14 @@ function KPITile({ label, value, sub, highlight, light, pos }: {
   );
 }
 
-function AnimatedBar({ pct, colorClass, delay = 0 }: { pct: number; colorClass: string; delay?: number }) {
-  const [width, setWidth] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setWidth(pct), 80 + delay);
-    return () => clearTimeout(t);
-  }, [pct, delay]);
+function AnimatedBar({ pct, colorClass }: { pct: number; colorClass: string }) {
   return (
     <div className="h-1.5 bg-bone rounded-full overflow-hidden">
-      <div
-        className={`h-full rounded-full bar-enter ${colorClass}`}
-        style={{ width: `${width}%` }}
+      <motion.div
+        className={`h-full rounded-full ${colorClass}`}
+        initial={{ width: 0 }}
+        animate={{ width: `${pct}%` }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
       />
     </div>
   );
@@ -292,8 +304,11 @@ function EventCard({ event, metrics, onSelect, onEdit, onDelete }: {
   const overBudget = metrics.totalCostAED > event.allocatedBudget;
 
   return (
-    <div
-      className="bg-white rounded-lg border border-bone shadow-sm hover:border-navy/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
+    <motion.div
+      whileHover={{ y: -3, boxShadow: '0 8px 24px rgba(15,52,96,0.12)' }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+      className="bg-white rounded-lg border border-bone shadow-sm cursor-pointer group"
       onClick={onSelect}
     >
       <div className="p-3.5">
@@ -343,7 +358,7 @@ function EventCard({ event, metrics, onSelect, onEdit, onDelete }: {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
