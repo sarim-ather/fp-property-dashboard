@@ -163,14 +163,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => { supabase!.removeChannel(channel); };
   }, []);
 
+  // Skip writing on the very first render — let the mount fetch win
+  const initialWriteDoneRef = useRef(false);
+
   // Write to Supabase on local data change (debounced 600ms, skip remote updates)
   useEffect(() => {
     saveToStorage(state.data);
 
     if (!supabase) return;
 
+    // Cancel any pending write and skip if this update came from remote
     if (remoteUpdateRef.current) {
       remoteUpdateRef.current = false;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      return;
+    }
+
+    // Don't write initial local state — wait for the mount fetch to resolve first
+    if (!initialWriteDoneRef.current) {
+      initialWriteDoneRef.current = true;
       return;
     }
 
