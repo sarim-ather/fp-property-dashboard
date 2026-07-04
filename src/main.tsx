@@ -5,21 +5,21 @@ import { AppProvider } from './context/AppContext';
 import { ProfileProvider } from './context/ProfileContext';
 import './index.css';
 
-// Force SW to activate new version immediately and reload the page
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.ready.then(reg => {
-    reg.addEventListener('updatefound', () => {
-      const newWorker = reg.installing;
-      if (newWorker) {
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            window.location.reload();
-          }
-        });
-      }
-    });
-    reg.update();
-  });
+// One-time cache nuke: unregister all SWs + clear caches, then reload fresh
+const CACHE_VERSION = 'v4';
+if (localStorage.getItem('fp_cache_cleared') !== CACHE_VERSION) {
+  localStorage.setItem('fp_cache_cleared', CACHE_VERSION);
+  (async () => {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    window.location.reload();
+  })();
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
